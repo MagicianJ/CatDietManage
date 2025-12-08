@@ -51,8 +51,10 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault(); 
     if (window.confirm('确定要删除这只猫猫的档案吗？此操作无法撤销。')) {
-      setCats(cats.filter(c => c.id !== id));
+      const newCats = cats.filter(c => c.id !== id);
+      setCats(newCats);
     }
   };
 
@@ -77,7 +79,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
             onClick={() => onSelectCat(cat.id)}
             className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 z-10">
               <button 
                 onClick={(e) => { e.stopPropagation(); handleOpenModal(cat); }}
                 className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
@@ -86,7 +88,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
               </button>
               <button 
                 onClick={(e) => handleDelete(cat.id, e)}
-                className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100"
+                className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 cursor-pointer"
               >
                 <Trash2 size={16} />
               </button>
@@ -142,7 +144,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-6">{isEditing ? '编辑猫猫' : '添加新猫猫'}</h3>
             <div className="space-y-4">

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { MeatType, MeatCategory } from '../types';
 import { generateId } from '../constants';
-import { Plus, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, Beef } from 'lucide-react';
 
 interface MeatManagerProps {
   meats: MeatType[];
@@ -28,8 +28,10 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
     setNewName('');
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Stop event bubbling
     if (window.confirm('确定要删除这种肉类吗？')) {
+      // Functional update to ensure fresh state
       setMeats(meats.filter((m) => m.id !== id));
     }
   };
@@ -78,7 +80,13 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
                 <span className="font-medium text-gray-700">{meat.name}</span>
                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button onClick={() => startEdit(meat)} className="text-blue-500 hover:bg-blue-100 p-1.5 rounded"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(meat.id)} className="text-red-500 hover:bg-red-100 p-1.5 rounded"><Trash2 size={14} /></button>
+                  <button 
+                    onClick={(e) => handleDelete(meat.id, e)} 
+                    className="text-red-500 hover:bg-red-100 p-1.5 rounded cursor-pointer"
+                    title="删除"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </>
             )}
@@ -91,8 +99,16 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
 
   return (
     <div className="space-y-6">
+       <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Beef className="text-primary" />
+          肌肉肉管理功能
+        </h1>
+        <p className="text-gray-500">自定义红肉和白肉的食材列表，供库存和采购使用。</p>
+      </div>
+
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">添加肉类</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">添加肌肉肉种类</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
             <label className="block text-sm font-medium text-gray-600 mb-1">肉类名称</label>
