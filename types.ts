@@ -7,6 +7,26 @@ export enum Gender {
 export enum MeatCategory {
   Red = '红肉',
   White = '白肉',
+  Heart = '心脏',
+  Organ = '非心脏内脏',
+  Bone = '骨骼',
+}
+
+export enum InventoryStatus {
+  InStock = '已入库',
+  Consuming = '消耗中',
+  Consumed = '已消耗',
+}
+
+export enum InventoryModule {
+  Meat = '肌肉肉',
+  Organ = '内脏',
+  Bone = '骨骼',
+}
+
+export enum InboundType {
+  Direct = '库存直调',
+  Purchase = '采购计划入库',
 }
 
 export interface MeatType {
@@ -34,7 +54,37 @@ export interface Cat {
   weight: number; // in grams
   breed: string;
   image?: string;
-  
   dietRatios: DietRatios;
-  // Supplements are now calculated via fixed rules, no longer stored per cat
+}
+
+export interface InventoryItem {
+  id: string;
+  module: InventoryModule;
+  category: MeatCategory;
+  name: string;
+  grams: number;
+  status: InventoryStatus;
+  inStockDate: string; // YYYY-MM-DD
+  startConsumeDate?: string;
+  endConsumeDate?: string;
+}
+
+export interface InboundRecord {
+  id: string;
+  type: InboundType;
+  module: InventoryModule;
+  category: MeatCategory;
+  name: string;
+  grams: number;
+  date: string;
+  adjustType: '新增' | '修改'; // Simple tracking
+}
+
+export interface PurchaseItem {
+  id: string;
+  module: InventoryModule;
+  category: MeatCategory;
+  name: string;
+  grams: number;
+  expectedDate: string;
 }

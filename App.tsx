@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Cat, MeatType } from './types';
-import { INITIAL_CAT, DEFAULT_MEATS } from './constants';
+import { Cat, MeatType, InventoryItem, PurchaseItem, InboundRecord, InventoryStatus, InboundType, InventoryModule } from './types';
+import { INITIAL_CAT, DEFAULT_MEATS, generateId } from './constants';
 import CatManager from './components/CatManager';
 import MeatManager from './components/MeatManager';
 import DietCalculator from './components/DietCalculator';
 import PackagingPlan from './components/PackagingPlan';
-import { LayoutDashboard, Cat as CatIcon, Beef, Settings, ClipboardList } from 'lucide-react';
+import InventoryManager from './components/InventoryManager';
+import PurchaseManager from './components/PurchaseManager';
+import { LayoutDashboard, Cat as CatIcon, Beef, Settings, ClipboardList, Package, ShoppingCart } from 'lucide-react';
 
 const App: React.FC = () => {
   // --- State ---
@@ -17,23 +19,33 @@ const App: React.FC = () => {
 
   const [meats, setMeats] = useState<MeatType[]>(() => {
     const saved = localStorage.getItem('rawpaws_meats');
-    // Important: If meats exist but are in English from previous run, we might want to merge or keep user's choice. 
-    // For this update, we respect local storage, but user can reset if they want.
-    // However, to ensure Chinese defaults appear for a fresh start or if they match the old defaults:
     return saved ? JSON.parse(saved) : DEFAULT_MEATS;
   });
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'meats' | 'cat-detail'>('dashboard');
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    const saved = localStorage.getItem('rawpaws_inventory');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [purchases, setPurchases] = useState<PurchaseItem[]>(() => {
+    const saved = localStorage.getItem('rawpaws_purchases');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [inboundRecords, setInboundRecords] = useState<InboundRecord[]>(() => {
+    const saved = localStorage.getItem('rawpaws_inbound');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [activeView, setActiveView] = useState<'dashboard' | 'meats' | 'inventory' | 'purchase' | 'cat-detail'>('dashboard');
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
 
   // --- Effects ---
-  useEffect(() => {
-    localStorage.setItem('rawpaws_cats', JSON.stringify(cats));
-  }, [cats]);
-
-  useEffect(() => {
-    localStorage.setItem('rawpaws_meats', JSON.stringify(meats));
-  }, [meats]);
+  useEffect(() => { localStorage.setItem('rawpaws_cats', JSON.stringify(cats)); }, [cats]);
+  useEffect(() => { localStorage.setItem('rawpaws_meats', JSON.stringify(meats)); }, [meats]);
+  useEffect(() => { localStorage.setItem('rawpaws_inventory', JSON.stringify(inventory)); }, [inventory]);
+  useEffect(() => { localStorage.setItem('rawpaws_purchases', JSON.stringify(purchases)); }, [purchases]);
+  useEffect(() => { localStorage.setItem('rawpaws_inbound', JSON.stringify(inboundRecords)); }, [inboundRecords]);
 
   // --- Handlers ---
   const handleSelectCat = (id: string) => {
@@ -43,6 +55,40 @@ const App: React.FC = () => {
 
   const handleUpdateCat = (updatedCat: Cat) => {
     setCats(cats.map(c => c.id === updatedCat.id ? updatedCat : c));
+  };
+
+  const handleConfirmArrival = (items: PurchaseItem[]) => {
+    const newInventoryItems: InventoryItem[] = [];
+    const newRecords: InboundRecord[] = [];
+    const now = new Date().toISOString().split('T')[0];
+
+    items.forEach(p => {
+      // Add to inventory
+      newInventoryItems.push({
+        id: generateId(),
+        module: p.module,
+        category: p.category,
+        name: p.name,
+        grams: p.grams,
+        status: InventoryStatus.InStock,
+        inStockDate: now
+      });
+
+      // Add to record
+      newRecords.push({
+        id: generateId(),
+        type: InboundType.Purchase,
+        module: p.module,
+        category: p.category,
+        name: p.name,
+        grams: p.grams,
+        date: now,
+        adjustType: '新增'
+      });
+    });
+
+    setInventory([...inventory, ...newInventoryItems]);
+    setInboundRecords([...newRecords, ...inboundRecords]);
   };
 
   const selectedCat = cats.find(c => c.id === selectedCatId);
@@ -58,7 +104,7 @@ const App: React.FC = () => {
           <h1 className="text-xl font-bold tracking-tight text-gray-800">RawPaws</h1>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
             onClick={() => setActiveView('dashboard')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'dashboard' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
@@ -72,7 +118,23 @@ const App: React.FC = () => {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'meats' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
           >
             <Beef size={20} />
-            肉类数据库
+            肌肉肉管理
+          </button>
+
+          <button
+            onClick={() => setActiveView('inventory')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'inventory' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
+          >
+            <Package size={20} />
+            食物库存管理
+          </button>
+
+          <button
+            onClick={() => setActiveView('purchase')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'purchase' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
+          >
+            <ShoppingCart size={20} />
+            采购计划管理
           </button>
 
           {selectedCatId && (
@@ -92,7 +154,7 @@ const App: React.FC = () => {
         </nav>
 
         <div className="p-4 border-t border-gray-100 text-xs text-gray-400 text-center">
-          生骨肉饮食管理 v1.1
+          生骨肉饮食管理 v2.0
         </div>
       </aside>
 
@@ -115,13 +177,40 @@ const App: React.FC = () => {
           )}
 
           {activeView === 'meats' && (
+             <MeatManager meats={meats} setMeats={setMeats} />
+          )}
+
+          {activeView === 'inventory' && (
              <div className="space-y-6">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">肉类数据库</h1>
-                <p className="text-gray-500">自定义红肉和白肉的食材列表。</p>
-              </div>
-              <MeatManager meats={meats} setMeats={setMeats} />
-            </div>
+               <div className="mb-6">
+                 <h1 className="text-2xl font-bold text-gray-800">食物库存管理</h1>
+                 <p className="text-gray-500">监控全家库存状态，管理入库与消耗。</p>
+               </div>
+               <InventoryManager 
+                 inventory={inventory}
+                 setInventory={setInventory}
+                 inboundRecords={inboundRecords}
+                 setInboundRecords={setInboundRecords}
+                 cats={cats}
+                 meats={meats}
+               />
+             </div>
+          )}
+
+          {activeView === 'purchase' && (
+             <div className="space-y-6">
+               <div className="mb-6">
+                 <h1 className="text-2xl font-bold text-gray-800">采购计划管理</h1>
+                 <p className="text-gray-500">规划未来的采购并处理到货。</p>
+               </div>
+               <PurchaseManager 
+                 purchases={purchases}
+                 setPurchases={setPurchases}
+                 cats={cats}
+                 meats={meats}
+                 onConfirmArrival={handleConfirmArrival}
+               />
+             </div>
           )}
 
           {activeView === 'cat-detail' && selectedCat && (
