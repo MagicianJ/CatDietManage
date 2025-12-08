@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MeatType, MeatCategory } from '../types';
 import { generateId } from '../constants';
@@ -28,7 +29,7 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this meat type?')) {
+    if (window.confirm('确定要删除这种肉类吗？')) {
       setMeats(meats.filter((m) => m.id !== id));
     }
   };
@@ -55,7 +56,7 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
   const renderList = (title: string, items: MeatType[], colorClass: string) => (
     <div className={`p-4 rounded-xl border ${colorClass} bg-white shadow-sm flex-1`}>
       <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <span className={`w-3 h-3 rounded-full ${title === 'Red Meat' ? 'bg-red-500' : 'bg-orange-300'}`}></span>
+        <span className={`w-3 h-3 rounded-full ${title === '红肉' ? 'bg-red-500' : 'bg-orange-300'}`}></span>
         {title}
       </h3>
       <ul className="space-y-2">
@@ -83,7 +84,7 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
             )}
           </li>
         ))}
-        {items.length === 0 && <li className="text-gray-400 text-sm italic">No meats added.</li>}
+        {items.length === 0 && <li className="text-gray-400 text-sm italic">暂无添加。</li>}
       </ul>
     </div>
   );
@@ -91,41 +92,41 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Meat Type</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">添加肉类</h2>
         <div className="flex flex-col sm:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
-            <label className="block text-sm font-medium text-gray-600 mb-1">Meat Name</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">肉类名称</label>
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="e.g. Venison"
+              placeholder="例如：鹿肉"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
             />
           </div>
           <div className="w-full sm:w-48">
-             <label className="block text-sm font-medium text-gray-600 mb-1">Category</label>
+             <label className="block text-sm font-medium text-gray-600 mb-1">分类</label>
              <select
                value={newCategory}
                onChange={(e) => setNewCategory(e.target.value as MeatCategory)}
                className="w-full p-2 border border-gray-300 rounded-lg outline-none"
              >
-               <option value={MeatCategory.Red}>Red Meat</option>
-               <option value={MeatCategory.White}>White Meat</option>
+               <option value={MeatCategory.Red}>红肉</option>
+               <option value={MeatCategory.White}>白肉</option>
              </select>
           </div>
           <button
             onClick={handleAdd}
             className="w-full sm:w-auto px-6 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
           >
-            <Plus size={18} /> Add
+            <Plus size={18} /> 添加
           </button>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {renderList('Red Meat', redMeats, 'border-red-100')}
-        {renderList('White Meat', whiteMeats, 'border-orange-100')}
+        {renderList('红肉', redMeats, 'border-red-100')}
+        {renderList('白肉', whiteMeats, 'border-orange-100')}
       </div>
     </div>
   );

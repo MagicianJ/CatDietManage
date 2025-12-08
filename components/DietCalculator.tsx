@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
-import { Cat, Supplement, SupplementUnit, SupplementMethod } from '../types';
-import { generateId } from '../constants';
-import { Plus, Trash2, PieChart, Info } from 'lucide-react';
+import { Cat } from '../types';
+import { getLifeStage } from '../constants';
+import { PieChart, Info, Beaker } from 'lucide-react';
 
 interface DietCalculatorProps {
   cat: Cat;
@@ -33,36 +34,56 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
 
   const getGrams = (percent: number) => Math.round(dailyTotal * (percent / 100));
 
-  // -- Supplement Logic --
-  const [newSupp, setNewSupp] = useState<Partial<Supplement>>({
-    name: '',
-    unit: SupplementUnit.Gram,
-    method: SupplementMethod.FixedDaily,
-    value: 0
-  });
+  // -- Fixed Supplement Logic --
+  const isAdult = getLifeStage(cat.birthDate) === 'adult';
+  const muscleMeatRatio = cat.dietRatios.redMeatPercent + cat.dietRatios.whiteMeatPercent;
+  const dailyMuscleMeat = dailyTotal * (muscleMeatRatio / 100);
 
-  const addSupplement = () => {
-    if (!newSupp.name || newSupp.value === undefined) return;
-    const supp: Supplement = {
-      id: generateId(),
-      name: newSupp.name,
-      unit: newSupp.unit!,
-      method: newSupp.method!,
-      value: Number(newSupp.value)
-    };
-    updateCat({
-      ...cat,
-      supplements: [...cat.supplements, supp]
-    });
-    setNewSupp({ name: '', unit: SupplementUnit.Gram, method: SupplementMethod.FixedDaily, value: 0 });
-  };
-
-  const removeSupplement = (id: string) => {
-    updateCat({
-      ...cat,
-      supplements: cat.supplements.filter(s => s.id !== id)
-    });
-  };
+  // Supplement Rules
+  const supplements = [
+    {
+      name: '蛋壳粉',
+      rule: '每100g肌肉肉需要0.6g',
+      daily: (dailyMuscleMeat / 100) * 0.6,
+      unit: 'g'
+    },
+    {
+      name: '复合维生素B',
+      rule: '两天一片',
+      daily: 0.5,
+      unit: '片'
+    },
+    {
+      name: '维生素E',
+      rule: '一周一片',
+      daily: 1/7,
+      unit: '片'
+    },
+    {
+      name: '碘 (180片版)',
+      rule: isAdult ? '成猫: 每700g肌肉肉1片' : '幼猫: 每700g肌肉肉2片',
+      daily: isAdult ? (dailyMuscleMeat / 700) : ((dailyMuscleMeat / 700) * 2),
+      unit: '片'
+    },
+    {
+      name: '锰 (10mg版)',
+      rule: isAdult ? '成猫: 每9000g肌肉肉1片' : '幼猫: 每6000g肉1片',
+      daily: isAdult ? (dailyMuscleMeat / 9000) : (dailyMuscleMeat / 6000),
+      unit: '片'
+    },
+    {
+      name: '牛磺酸',
+      rule: '每1000g肌肉肉需要0.5g',
+      daily: (dailyMuscleMeat / 1000) * 0.5,
+      unit: 'g'
+    },
+    {
+      name: '鱼油',
+      rule: '每周两颗',
+      daily: 2/7,
+      unit: '颗'
+    }
+  ];
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -71,13 +92,13 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
           onClick={() => setActiveTab('ratios')}
           className={`flex-1 py-4 font-medium text-sm transition-colors ${activeTab === 'ratios' ? 'text-primary border-b-2 border-primary bg-rose-50/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Raw Ratio Configuration
+          生肉食比例配置
         </button>
         <button
           onClick={() => setActiveTab('supplements')}
           className={`flex-1 py-4 font-medium text-sm transition-colors ${activeTab === 'supplements' ? 'text-secondary border-b-2 border-secondary bg-teal-50/50' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Supplements
+          补充剂配置
         </button>
       </div>
 
@@ -88,8 +109,8 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h4 className="font-bold text-gray-800">Daily Intake Setting</h4>
-                  <p className="text-sm text-gray-500">Based on cat weight ({cat.weight}g)</p>
+                  <h4 className="font-bold text-gray-800">每日摄入量设置</h4>
+                  <p className="text-sm text-gray-500">基于猫猫体重 ({cat.weight}g) 计算</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -103,12 +124,12 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-primary">{dailyTotal}g</div>
-                    <div className="text-xs text-gray-500">per day</div>
+                    <div className="text-xs text-gray-500">每天</div>
                   </div>
                   <div className="w-px h-10 bg-gray-300 mx-2"></div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-gray-700">{perMeal}g</div>
-                    <div className="text-xs text-gray-500">per meal (3x)</div>
+                    <div className="text-xs text-gray-500">每顿 (3顿/天)</div>
                   </div>
                 </div>
               </div>
@@ -118,20 +139,20 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold text-gray-800 flex items-center gap-2">
-                  <PieChart size={18} /> Component Balance
+                  <PieChart size={18} /> 食材占比
                 </h4>
                 <div className={`text-sm font-bold px-3 py-1 rounded-full ${totalPercentage === 100 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                  Total: {totalPercentage}%
+                  当前总计: {totalPercentage}%
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
-                  { label: 'Red Meat', field: 'redMeatPercent', color: 'bg-red-500' },
-                  { label: 'White Meat', field: 'whiteMeatPercent', color: 'bg-orange-300' },
-                  { label: 'Heart', field: 'heartPercent', color: 'bg-red-700' },
-                  { label: 'Other Organs', field: 'organPercent', color: 'bg-purple-600' },
-                  { label: 'Raw Bone', field: 'bonePercent', color: 'bg-stone-300' },
+                  { label: '红肉', field: 'redMeatPercent', color: 'bg-red-500' },
+                  { label: '白肉', field: 'whiteMeatPercent', color: 'bg-orange-300' },
+                  { label: '心脏', field: 'heartPercent', color: 'bg-red-700' },
+                  { label: '非心脏内脏', field: 'organPercent', color: 'bg-purple-600' },
+                  { label: '带肉骨', field: 'bonePercent', color: 'bg-stone-300' },
                 ].map((item) => (
                   <div key={item.field} className="p-4 border border-gray-100 rounded-xl hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start mb-2">
@@ -140,7 +161,7 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
                         <span className="font-medium text-gray-700">{item.label}</span>
                       </div>
                       <div className="text-xs font-semibold bg-gray-100 px-2 py-1 rounded">
-                        {getGrams(cat.dietRatios[item.field as keyof typeof cat.dietRatios])}g / day
+                        {getGrams(cat.dietRatios[item.field as keyof typeof cat.dietRatios])}g / 天
                       </div>
                     </div>
                     <div className="relative mt-2">
@@ -169,111 +190,45 @@ const DietCalculator: React.FC<DietCalculatorProps> = ({ cat, updateCat }) => {
               {totalPercentage !== 100 && (
                 <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 text-sm rounded-lg flex items-start gap-2">
                   <Info size={16} className="mt-0.5 shrink-0" />
-                  <p>Warning: Your component percentages sum to {totalPercentage}%, not 100%. Please adjust them to ensure a complete ration calculation.</p>
+                  <p>注意：当前各项比例之和为 {totalPercentage}%，请调整至 100% 以确保计算准确。</p>
                 </div>
               )}
             </div>
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Add Supplement Form */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <h4 className="font-bold text-gray-800 mb-4">Add Supplement</h4>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div className="md:col-span-1">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Taurine"
-                    value={newSupp.name}
-                    onChange={(e) => setNewSupp({...newSupp, name: e.target.value})}
-                    className="w-full p-2 border rounded-lg text-sm"
-                  />
-                </div>
-                <div>
-                   <label className="text-xs font-medium text-gray-500 mb-1 block">Calculation Method</label>
-                   <select
-                     value={newSupp.method}
-                     onChange={(e) => setNewSupp({...newSupp, method: e.target.value as SupplementMethod})}
-                     className="w-full p-2 border rounded-lg text-sm"
-                   >
-                     <option value={SupplementMethod.FixedDaily}>Fixed Daily Amount</option>
-                     <option value={SupplementMethod.ByFoodRatio}>% of Food Weight</option>
-                   </select>
-                </div>
-                <div>
-                   <label className="text-xs font-medium text-gray-500 mb-1 block">
-                     {newSupp.method === SupplementMethod.FixedDaily ? 'Amount' : 'Percentage'}
-                   </label>
-                   <div className="flex">
-                     <input
-                       type="number"
-                       step="0.01"
-                       value={newSupp.value}
-                       onChange={(e) => setNewSupp({...newSupp, value: Number(e.target.value)})}
-                       className="w-full p-2 border-l border-t border-b rounded-l-lg text-sm"
-                     />
-                     <select
-                        value={newSupp.unit}
-                        onChange={(e) => setNewSupp({...newSupp, unit: e.target.value as SupplementUnit})}
-                        className="p-2 border rounded-r-lg bg-gray-100 text-sm"
-                        disabled={newSupp.method === SupplementMethod.ByFoodRatio}
-                     >
-                       {newSupp.method === SupplementMethod.ByFoodRatio ? (
-                          <option>%</option>
-                       ) : (
-                         Object.values(SupplementUnit).map(u => <option key={u} value={u}>{u}</option>)
-                       )}
-                     </select>
-                   </div>
-                </div>
-                <button
-                  onClick={addSupplement}
-                  className="bg-secondary text-white py-2 px-4 rounded-lg hover:bg-teal-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Plus size={16} /> Add
-                </button>
+            <div className="bg-teal-50 p-4 rounded-xl border border-teal-100 flex gap-3">
+              <Beaker className="text-teal-600 shrink-0 mt-1" />
+              <div>
+                <h4 className="font-bold text-teal-800">补充剂计算规则 (只读)</h4>
+                <p className="text-sm text-teal-600 mt-1">
+                  以下补充剂根据猫猫的年龄段 (<span className="font-bold">{isAdult ? '成猫' : '幼猫'}</span>) 及每日摄入的肌肉肉 ({dailyMuscleMeat.toFixed(1)}g) 自动计算。
+                  肌肉肉 = 红肉 + 白肉。
+                </p>
               </div>
             </div>
 
-            {/* List */}
-            <div>
-              <h4 className="font-bold text-gray-800 mb-3">Active Supplements</h4>
-              {cat.supplements.length === 0 ? (
-                <p className="text-gray-400 italic text-sm">No supplements added.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {cat.supplements.map(supp => {
-                    // Preview calc
-                    let calculatedPreview = '';
-                    if (supp.method === SupplementMethod.ByFoodRatio) {
-                      const amount = (dailyTotal * (supp.value / 100)).toFixed(2);
-                      calculatedPreview = `${amount}g / day`;
-                    } else {
-                       calculatedPreview = `${supp.value} ${supp.unit} / day`;
-                    }
-
-                    return (
-                      <div key={supp.id} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg bg-white">
-                        <div>
-                          <div className="font-semibold text-gray-700">{supp.name}</div>
-                          <div className="text-xs text-gray-500">
-                             {supp.method === SupplementMethod.FixedDaily 
-                               ? `Fixed: ${supp.value}${supp.unit}` 
-                               : `Ratio: ${supp.value}% of food`}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-secondary">{calculatedPreview}</span>
-                          <button onClick={() => removeSupplement(supp.id)} className="text-gray-400 hover:text-red-500">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+            <div className="overflow-x-auto border border-gray-200 rounded-xl">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-gray-50 text-gray-500 uppercase text-xs">
+                  <tr>
+                    <th className="px-4 py-3">补充剂名称</th>
+                    <th className="px-4 py-3">计算规则</th>
+                    <th className="px-4 py-3 text-right">参考日均用量</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {supplements.map((supp, idx) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-800">{supp.name}</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">{supp.rule}</td>
+                      <td className="px-4 py-3 text-right font-bold text-secondary">
+                        {supp.daily < 0.01 ? '< 0.01' : supp.daily.toFixed(2)} {supp.unit}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

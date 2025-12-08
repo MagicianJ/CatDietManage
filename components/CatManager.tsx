@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Cat, Gender } from '../types';
-import { generateId, INITIAL_CAT } from '../constants';
+import { generateId, INITIAL_CAT, getAgeLabel } from '../constants';
 import { Plus, Trash2, Edit2, Scale, Calendar, Cat as CatIcon } from 'lucide-react';
 
 interface CatManagerProps {
@@ -23,7 +24,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
       years--;
       months += 12;
     }
-    return `${years}y ${months}m`;
+    return `${years}岁 ${months}个月`;
   };
 
   const handleOpenModal = (cat?: Cat) => {
@@ -50,7 +51,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Delete this cat profile? This cannot be undone.')) {
+    if (window.confirm('确定要删除这只猫猫的档案吗？此操作无法撤销。')) {
       setCats(cats.filter(c => c.id !== id));
     }
   };
@@ -59,12 +60,12 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
     <div>
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">My Cats</h2>
+        <h2 className="text-2xl font-bold text-gray-800">猫猫管理</h2>
         <button
           onClick={() => handleOpenModal()}
           className="px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-rose-600 transition-colors flex items-center gap-2"
         >
-          <Plus size={18} /> Add Cat
+          <Plus size={18} /> 添加猫猫
         </button>
       </div>
 
@@ -96,7 +97,12 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
                 <CatIcon size={32} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">{cat.name}</h3>
+                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  {cat.name}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${getAgeLabel(cat.birthDate) === '成猫' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {getAgeLabel(cat.birthDate)}
+                  </span>
+                </h3>
                 <p className="text-sm text-gray-500">{cat.breed}</p>
               </div>
             </div>
@@ -108,20 +114,20 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
               </div>
               <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-secondary" />
-                <span>{calculateAge(cat.birthDate)} ({cat.birthDate})</span>
+                <span>{calculateAge(cat.birthDate)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.gender === Gender.Male ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
                   {cat.gender}
                 </span>
                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${cat.isNeutered ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                  {cat.isNeutered ? 'Neutered' : 'Intact'}
+                  {cat.isNeutered ? '已绝育' : '未绝育'}
                 </span>
               </div>
             </div>
             
             <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-              <span className="text-primary font-semibold text-sm">Manage Diet Plan &rarr;</span>
+              <span className="text-primary font-semibold text-sm">管理饮食计划 &rarr;</span>
             </div>
           </div>
         ))}
@@ -129,8 +135,8 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
 
       {cats.length === 0 && (
         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-          <p className="text-gray-500 mb-4">No cats added yet.</p>
-          <button onClick={() => handleOpenModal()} className="text-primary font-semibold hover:underline">Add your first cat</button>
+          <p className="text-gray-500 mb-4">暂无猫猫信息</p>
+          <button onClick={() => handleOpenModal()} className="text-primary font-semibold hover:underline">添加第一只猫猫</button>
         </div>
       )}
 
@@ -138,10 +144,10 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-6">{isEditing ? 'Edit Cat' : 'Add New Cat'}</h3>
+            <h3 className="text-xl font-bold mb-6">{isEditing ? '编辑猫猫' : '添加新猫猫'}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">昵称</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -151,7 +157,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">出生日期</label>
                   <input
                     type="date"
                     value={formData.birthDate}
@@ -160,7 +166,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
                   />
                 </div>
                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Weight (g)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">体重 (g)</label>
                   <input
                     type="number"
                     value={formData.weight}
@@ -171,18 +177,18 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
               </div>
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">性别</label>
                   <select
                     value={formData.gender}
                     onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
                     className="w-full p-2 border rounded-lg"
                   >
-                    <option value={Gender.Male}>Male</option>
-                    <option value={Gender.Female}>Female</option>
+                    <option value={Gender.Male}>公</option>
+                    <option value={Gender.Female}>母</option>
                   </select>
                 </div>
                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>
                   <div className="flex items-center gap-2 h-10">
                     <input
                       type="checkbox"
@@ -191,12 +197,12 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
                       onChange={e => setFormData({ ...formData, isNeutered: e.target.checked })}
                       className="w-5 h-5 text-primary rounded"
                     />
-                    <label htmlFor="neutered" className="text-sm">Spayed / Neutered</label>
+                    <label htmlFor="neutered" className="text-sm">是否已绝育</label>
                   </div>
                 </div>
               </div>
                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Breed</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">品种</label>
                 <input
                   type="text"
                   value={formData.breed}
@@ -206,8 +212,8 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
               </div>
             </div>
             <div className="mt-8 flex justify-end gap-3">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">Cancel</button>
-              <button onClick={handleSave} className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-rose-600">Save Profile</button>
+              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">取消</button>
+              <button onClick={handleSave} className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-rose-600">保存</button>
             </div>
           </div>
         </div>

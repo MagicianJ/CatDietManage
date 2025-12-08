@@ -1,47 +1,28 @@
+
 export enum Gender {
-  Male = 'Male',
-  Female = 'Female',
+  Male = '公',
+  Female = '母',
 }
 
 export enum MeatCategory {
-  Red = 'Red Meat',
-  White = 'White Meat',
-}
-
-export enum SupplementUnit {
-  Gram = 'g',
-  Pill = 'pill',
-  Drop = 'drop',
-  Pump = 'pump'
-}
-
-export enum SupplementMethod {
-  FixedDaily = 'Fixed Amount Per Day',
-  ByFoodRatio = 'Percentage of Daily Food Weight', // e.g., 1% of total food intake
+  Red = '红肉',
+  White = '白肉',
 }
 
 export interface MeatType {
   id: string;
   name: string;
   category: MeatCategory;
-  isSystem?: boolean; // Default ones that shouldn't be deleted easily
+  isSystem?: boolean; 
 }
 
 export interface DietRatios {
-  dailyIntakePercent: number; // % of body weight (e.g. 3%)
+  dailyIntakePercent: number; // % of body weight
   redMeatPercent: number;
   whiteMeatPercent: number;
   heartPercent: number;
   organPercent: number; // Non-heart organ
   bonePercent: number;
-}
-
-export interface Supplement {
-  id: string;
-  name: string;
-  unit: SupplementUnit;
-  method: SupplementMethod;
-  value: number; // The amount or the percentage
 }
 
 export interface Cat {
@@ -54,7 +35,6 @@ export interface Cat {
   breed: string;
   image?: string;
   
-  // Each cat has its own diet settings
   dietRatios: DietRatios;
-  supplements: Supplement[];
+  // Supplements are now calculated via fixed rules, no longer stored per cat
 }
