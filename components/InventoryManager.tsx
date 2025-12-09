@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { InventoryItem, InventoryModule, InventoryStatus, InboundRecord, InboundType, MeatCategory, Cat, MeatType } from '../types';
 import { generateId } from '../constants';
 import { AlertCircle, RefreshCw, Plus, Filter, ClipboardList, Trash2 } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface InventoryManagerProps {
   inventory: InventoryItem[];
-  setInventory: (items: InventoryItem[]) => void;
+  setInventory: (items: InventoryItem[] | ((prev: InventoryItem[]) => InventoryItem[])) => void;
   inboundRecords: InboundRecord[];
-  setInboundRecords: (records: InboundRecord[]) => void;
+  setInboundRecords: (records: InboundRecord[] | ((prev: InboundRecord[]) => InboundRecord[])) => void;
   cats: Cat[];
   meats: MeatType[];
 }
@@ -16,6 +17,14 @@ interface InventoryManagerProps {
 const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInventory, inboundRecords, setInboundRecords, cats, meats }) => {
   const [activeModule, setActiveModule] = useState<'summary' | InventoryModule | 'records'>('summary');
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Modal State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+  }>({ isOpen: false, title: '', message: '', action: () => {} });
 
   // --- Helpers ---
   const getDailyConsumption = (category: MeatCategory | 'Muscle' | 'Organ'): number => {
@@ -186,7 +195,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
 
   const handleStatusChange = (ids: string[], status: InventoryStatus) => {
     const now = new Date().toISOString().split('T')[0];
-    const updated = inventory.map(item => {
+    setInventory(prev => prev.map(item => {
       if (ids.includes(item.id)) {
         const update: Partial<InventoryItem> = { status };
         if (status === InventoryStatus.Consuming) update.startConsumeDate = now;
@@ -194,15 +203,20 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
         return { ...item, ...update };
       }
       return item;
-    });
-    setInventory(updated);
+    }));
     setSelectedIds([]);
   };
 
-  const deleteItem = (id: string) => {
-    if (window.confirm('确定删除此库存记录吗？')) {
-      setInventory(inventory.filter(i => i.id !== id));
-    }
+  const deleteItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmConfig({
+      isOpen: true,
+      title: '删除库存记录',
+      message: '确定删除此库存记录吗？此操作无法撤销。',
+      action: () => {
+        setInventory(prev => prev.filter(i => i.id !== id));
+      }
+    });
   };
 
   const saveNewItem = () => {
@@ -218,7 +232,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
       startConsumeDate: newItem.status === InventoryStatus.Consuming ? (newItem.startConsumeDate || new Date().toISOString().split('T')[0]) : undefined
     };
 
-    setInventory([...inventory, item]);
+    setInventory(prev => [...prev, item]);
     
     // Add Inbound Record
     const record: InboundRecord = {
@@ -231,7 +245,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
       date: item.inStockDate,
       adjustType: '新增'
     };
-    setInboundRecords([record, ...inboundRecords]);
+    setInboundRecords(prev => [record, ...prev]);
     
     setIsAddMode(false);
     setNewItem({ grams: 500, status: InventoryStatus.InStock });
@@ -245,7 +259,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
       return true;
     });
 
-    // Stats - Calculated directly without useMemo because this function is called conditionally
+    // Stats
     let stats = '';
     if (module === InventoryModule.Meat) {
       const red = items.filter(i => i.category === MeatCategory.Red && i.status === InventoryStatus.InStock).reduce((s, i) => s + i.grams, 0);
@@ -405,7 +419,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                      {item.endConsumeDate && <div>结束: {item.endConsumeDate}</div>}
                    </td>
                    <td className="px-4 py-3 text-right">
-                     <button onClick={() => deleteItem(item.id)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={16} /></button>
+                     <button onClick={(e) => deleteItem(item.id, e)} className="text-red-400 hover:text-red-600 p-1"><Trash2 size={16} /></button>
                    </td>
                  </tr>
                ))}
@@ -485,6 +499,15 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
         {activeModule === InventoryModule.Bone && renderModuleList(InventoryModule.Bone)}
         {activeModule === 'records' && renderRecords()}
       </div>
+
+      <ConfirmModal 
+         isOpen={confirmConfig.isOpen}
+         title={confirmConfig.title}
+         message={confirmConfig.message}
+         onConfirm={confirmConfig.action}
+         onCancel={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+         isDanger={true}
+       />
     </div>
   );
 };

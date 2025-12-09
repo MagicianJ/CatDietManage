@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { MeatType, MeatCategory } from '../types';
 import { generateId } from '../constants';
 import { Plus, Trash2, Edit2, X, Check, Beef } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface MeatManagerProps {
   meats: MeatType[];
-  setMeats: (meats: MeatType[]) => void;
+  setMeats: (meats: MeatType[] | ((prev: MeatType[]) => MeatType[])) => void;
 }
 
 const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
@@ -16,6 +17,14 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState<MeatCategory>(MeatCategory.Red);
 
+  // Modal State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+  }>({ isOpen: false, title: '', message: '', action: () => {} });
+
   const handleAdd = () => {
     if (!newName.trim()) return;
     const newMeat: MeatType = {
@@ -24,15 +33,20 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
       category: newCategory,
       isSystem: false,
     };
-    setMeats([...meats, newMeat]);
+    setMeats(prev => [...prev, newMeat]);
     setNewName('');
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
-    if (window.confirm('确定要删除这种肉类吗？')) {
-      // Functional update to ensure fresh state
-      setMeats(meats.filter((m) => m.id !== id));
-    }
+    e.stopPropagation(); // Stop event bubbling
+    setConfirmConfig({
+      isOpen: true,
+      title: '删除肌肉肉',
+      message: '确定要删除这种肉类吗？此操作将影响所有关联配置。',
+      action: () => {
+        setMeats(prev => prev.filter((m) => m.id !== id));
+      }
+    });
   };
 
   const startEdit = (meat: MeatType) => {
@@ -43,7 +57,7 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
 
   const saveEdit = () => {
     if (!editName.trim()) return;
-    setMeats(meats.map(m => m.id === editingId ? { ...m, name: editName, category: editCategory } : m));
+    setMeats(prev => prev.map(m => m.id === editingId ? { ...m, name: editName, category: editCategory } : m));
     setEditingId(null);
   };
 
@@ -79,8 +93,8 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
                 <span className="font-medium text-gray-700">{meat.name}</span>
                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button onClick={() => startEdit(meat)} className="text-blue-500 hover:bg-blue-100 p-1.5 rounded"><Edit2 size={14} /></button>
-                  <button
-                    onClick={(e) => handleDelete(meat.id, e)}
+                  <button 
+                    onClick={(e) => handleDelete(meat.id, e)} 
                     className="text-red-500 hover:bg-red-100 p-1.5 rounded cursor-pointer"
                     title="删除"
                   >
@@ -143,6 +157,15 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
         {renderList('红肉', redMeats, 'border-red-100')}
         {renderList('白肉', whiteMeats, 'border-orange-100')}
       </div>
+
+      <ConfirmModal 
+         isOpen={confirmConfig.isOpen}
+         title={confirmConfig.title}
+         message={confirmConfig.message}
+         onConfirm={confirmConfig.action}
+         onCancel={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+         isDanger={true}
+       />
     </div>
   );
 };

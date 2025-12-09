@@ -93,52 +93,52 @@ const App: React.FC = () => {
 
   const selectedCat = cats.find(c => c.id === selectedCatId);
 
+  // --- Navigation Items ---
+  const navItems = [
+    { id: 'dashboard', label: '面板', icon: LayoutDashboard },
+    { id: 'meats', label: '肌肉肉', icon: Beef },
+    { id: 'inventory', label: '库存', icon: Package },
+    { id: 'purchase', label: '采购', icon: ShoppingCart },
+  ];
+
   // --- Render ---
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900">
+    <div className="h-screen bg-gray-50 flex flex-col md:flex-row font-sans text-gray-900 overflow-hidden">
       
-      {/* Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 flex flex-col sticky top-0 md:h-screen z-10 shadow-sm md:shadow-none">
+      {/* --- Mobile Top Header --- */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-30 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg">R</div>
+          <h1 className="text-lg font-bold text-gray-800">RawPaws</h1>
+        </div>
+        {activeView === 'cat-detail' && selectedCat && (
+          <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full flex items-center gap-1">
+            <CatIcon size={14} /> {selectedCat.name}
+          </div>
+        )}
+      </header>
+
+      {/* --- Desktop Sidebar Navigation --- */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-full z-10 shadow-sm">
         <div className="p-6 border-b border-gray-100 flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl">R</div>
           <h1 className="text-xl font-bold tracking-tight text-gray-800">RawPaws</h1>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          <button
-            onClick={() => setActiveView('dashboard')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'dashboard' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
-          >
-            <LayoutDashboard size={20} />
-            主面板
-          </button>
-          
-          <button
-            onClick={() => setActiveView('meats')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'meats' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
-          >
-            <Beef size={20} />
-            肌肉肉管理
-          </button>
-
-          <button
-            onClick={() => setActiveView('inventory')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'inventory' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
-          >
-            <Package size={20} />
-            食物库存管理
-          </button>
-
-          <button
-            onClick={() => setActiveView('purchase')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === 'purchase' ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
-          >
-            <ShoppingCart size={20} />
-            采购计划管理
-          </button>
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveView(item.id as any)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeView === item.id ? 'bg-rose-50 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              <item.icon size={20} />
+              {item.id === 'dashboard' ? '主面板' : item.id === 'meats' ? '肌肉肉管理' : item.id === 'inventory' ? '食物库存管理' : '采购计划管理'}
+            </button>
+          ))}
 
           {selectedCatId && (
-            <div className="mt-8">
+            <div className="mt-8 animate-fade-in">
               <div className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                 当前选择
               </div>
@@ -158,9 +158,9 @@ const App: React.FC = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="max-w-5xl mx-auto">
+      {/* --- Main Content Area --- */}
+      <main className="flex-1 h-full overflow-y-auto bg-gray-50 scroll-smooth">
+        <div className="p-4 md:p-8 pt-20 pb-24 md:pt-8 md:pb-8 max-w-5xl mx-auto">
           
           {activeView === 'dashboard' && (
             <div className="space-y-6">
@@ -182,7 +182,8 @@ const App: React.FC = () => {
 
           {activeView === 'inventory' && (
              <div className="space-y-6">
-               <div className="mb-6">
+               {/* Mobile Title (Optional duplicate since header exists, but good for context) */}
+               <div className="mb-6 hidden md:block">
                  <h1 className="text-2xl font-bold text-gray-800">食物库存管理</h1>
                  <p className="text-gray-500">监控全家库存状态，管理入库与消耗。</p>
                </div>
@@ -199,7 +200,7 @@ const App: React.FC = () => {
 
           {activeView === 'purchase' && (
              <div className="space-y-6">
-               <div className="mb-6">
+               <div className="mb-6 hidden md:block">
                  <h1 className="text-2xl font-bold text-gray-800">采购计划管理</h1>
                  <p className="text-gray-500">规划未来的采购并处理到货。</p>
                </div>
@@ -214,7 +215,7 @@ const App: React.FC = () => {
           )}
 
           {activeView === 'cat-detail' && selectedCat && (
-            <div className="space-y-8 fade-in">
+            <div className="space-y-8 animate-fade-in">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-6">
                 <div>
                    <button 
@@ -223,7 +224,7 @@ const App: React.FC = () => {
                    >
                      &larr; 返回主面板
                    </button>
-                   <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                   <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
                      {selectedCat.name} 的饮食计划
                      <span className="text-sm font-normal bg-gray-100 px-3 py-1 rounded-full text-gray-600">
                        体重: {selectedCat.weight}g
@@ -257,9 +258,27 @@ const App: React.FC = () => {
               <p>找不到该猫猫信息，请返回主面板。</p>
             </div>
           )}
-
         </div>
       </main>
+
+      {/* --- Mobile Bottom Navigation --- */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-16 z-30 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        {navItems.map(item => (
+          <button
+            key={item.id}
+            onClick={() => setActiveView(item.id as any)}
+            className={`flex flex-col items-center justify-center w-full h-full ${
+              activeView === item.id || (item.id === 'dashboard' && activeView === 'cat-detail') 
+                ? 'text-primary' 
+                : 'text-gray-400'
+            }`}
+          >
+            <item.icon size={24} strokeWidth={activeView === item.id ? 2.5 : 2} />
+            <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
     </div>
   );
 };

@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Cat, Gender } from '../types';
 import { generateId, INITIAL_CAT, getAgeLabel } from '../constants';
 import { Plus, Trash2, Edit2, Scale, Calendar, Cat as CatIcon } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface CatManagerProps {
   cats: Cat[];
-  setCats: (cats: Cat[]) => void;
+  setCats: (cats: Cat[] | ((prev: Cat[]) => Cat[])) => void;
   onSelectCat: (catId: string) => void;
 }
 
@@ -14,6 +15,14 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<Cat>(INITIAL_CAT);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Modal State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+  }>({ isOpen: false, title: '', message: '', action: () => {} });
 
   const calculateAge = (birthDate: string): string => {
     const today = new Date();
@@ -42,19 +51,24 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
     if (!formData.name) return;
     
     if (isEditing) {
-      setCats(cats.map(c => c.id === formData.id ? formData : c));
+      setCats(prev => prev.map(c => c.id === formData.id ? formData : c));
     } else {
-      setCats([...cats, formData]);
+      setCats(prev => [...prev, formData]);
     }
     setIsModalOpen(false);
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (window.confirm('确定要删除这只猫猫的档案吗？此操作无法撤销。')) {
-      const newCats = cats.filter(c => c.id !== id);
-      setCats(newCats);
-    }
+    e.stopPropagation();
+    e.preventDefault(); 
+    setConfirmConfig({
+      isOpen: true,
+      title: '删除猫猫档案',
+      message: '确定要删除这只猫猫的档案吗？此操作无法撤销。',
+      action: () => {
+        setCats(prev => prev.filter(c => c.id !== id));
+      }
+    });
   };
 
   return (
@@ -219,6 +233,15 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
           </div>
         </div>
       )}
+
+      <ConfirmModal 
+         isOpen={confirmConfig.isOpen}
+         title={confirmConfig.title}
+         message={confirmConfig.message}
+         onConfirm={confirmConfig.action}
+         onCancel={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+         isDanger={true}
+       />
     </div>
   );
 };

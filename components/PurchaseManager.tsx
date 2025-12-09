@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { PurchaseItem, InventoryModule, MeatCategory, InventoryItem, InventoryStatus, InboundRecord, InboundType, Cat, MeatType } from '../types';
 import { generateId } from '../constants';
 import { ShoppingCart, CheckSquare, Plus, Trash2, Calendar, Archive } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 
 interface PurchaseManagerProps {
   purchases: PurchaseItem[];
-  setPurchases: (items: PurchaseItem[]) => void;
+  setPurchases: (items: PurchaseItem[] | ((prev: PurchaseItem[]) => PurchaseItem[])) => void;
   cats: Cat[];
   meats: MeatType[];
   onConfirmArrival: (items: PurchaseItem[]) => void;
@@ -17,6 +18,14 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
   const [detailModule, setDetailModule] = useState<InventoryModule>(InventoryModule.Meat);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Modal State
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: () => void;
+  }>({ isOpen: false, title: '', message: '', action: () => {} });
 
   // --- Calculations ---
   const getDailyConsumption = (category: MeatCategory | 'Muscle' | 'Organ' | 'Bone'): number => {
@@ -42,11 +51,17 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
   const handleBatchArrival = () => {
     if (selectedIds.length === 0) return;
     const itemsToConfirm = purchases.filter(p => selectedIds.includes(p.id));
-    if (window.confirm(`确认将选中的 ${itemsToConfirm.length} 项采购加入库存吗？`)) {
-      onConfirmArrival(itemsToConfirm);
-      setPurchases(purchases.filter(p => !selectedIds.includes(p.id)));
-      setSelectedIds([]);
-    }
+    
+    setConfirmConfig({
+      isOpen: true,
+      title: '确认入库',
+      message: `确认将选中的 ${itemsToConfirm.length} 项采购计划标记为已到货并加入库存吗？`,
+      action: () => {
+        onConfirmArrival(itemsToConfirm);
+        setPurchases(prev => prev.filter(p => !selectedIds.includes(p.id)));
+        setSelectedIds([]);
+      }
+    });
   };
 
   const renderArrival = () => {
@@ -113,18 +128,26 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
       grams: Number(newItem.grams),
       expectedDate: newItem.expectedDate || new Date().toISOString().split('T')[0]
     };
-    setPurchases([...purchases, item]);
+    setPurchases(prev => [...prev, item]);
     setNewItem({ grams: 1000 });
   };
 
-  const deletePurchase = (id: string) => {
-    if(window.confirm('删除此采购项？')) setPurchases(purchases.filter(p => p.id !== id));
+  const deletePurchase = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmConfig({
+      isOpen: true,
+      title: '删除采购计划',
+      message: '确定要删除这条采购计划吗？',
+      action: () => {
+        setPurchases(prev => prev.filter(p => p.id !== id));
+      }
+    });
   };
 
   const renderDetails = () => {
     const items = purchases.filter(p => p.module === detailModule);
     
-    // Stats - Calculated directly without useMemo
+    // Stats
     let stats = null;
     let totalGrams = items.reduce((s, i) => s + i.grams, 0);
     let label = '';
@@ -216,7 +239,7 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
                    </div>
                    <div className="flex items-center gap-4">
                      <span className="font-bold text-gray-700">{item.grams}g</span>
-                     <button onClick={() => deletePurchase(item.id)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
+                     <button onClick={(e) => deletePurchase(item.id, e)} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
                    </div>
                 </div>
               ))}
@@ -239,6 +262,16 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
 
        {activeTab === 'arrival' && renderArrival()}
        {activeTab === 'details' && renderDetails()}
+
+       <ConfirmModal 
+         isOpen={confirmConfig.isOpen}
+         title={confirmConfig.title}
+         message={confirmConfig.message}
+         onConfirm={confirmConfig.action}
+         onCancel={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+         confirmText="确认"
+         cancelText="取消"
+       />
     </div>
   );
 };
