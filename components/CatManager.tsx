@@ -50,7 +50,7 @@ const CatManager: React.FC<CatManagerProps> = ({ cats, setCats, onSelectCat }) =
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (window.confirm('确定要删除这只猫猫的档案吗？此操作无法撤销。')) {
       const newCats = cats.filter(c => c.id !== id);
       setCats(newCats);

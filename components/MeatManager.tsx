@@ -79,8 +79,8 @@ const MeatManager: React.FC<MeatManagerProps> = ({ meats, setMeats }) => {
                 <span className="font-medium text-gray-700">{meat.name}</span>
                 <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button onClick={() => startEdit(meat)} className="text-blue-500 hover:bg-blue-100 p-1.5 rounded"><Edit2 size={14} /></button>
-                  <button 
-                    onClick={(e) => handleDelete(meat.id, e)} 
+                  <button
+                    onClick={(e) => handleDelete(meat.id, e)}
                     className="text-red-500 hover:bg-red-100 p-1.5 rounded cursor-pointer"
                     title="删除"
                   >
