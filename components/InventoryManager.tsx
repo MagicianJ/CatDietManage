@@ -360,7 +360,7 @@ const InventoryManager: React.FC<InventoryManagerProps> = ({ inventory, setInven
                     </div>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">名称</label>
-                      <input type="text" className="w-full p-2 border rounded text-sm" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} />
+                      <input type="text" className="w-full p-2 border rounded text-sm" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value, category: newItem.category?newItem.category :MeatCategory.Heart})} />
                     </div>
                   </>
                ) : (

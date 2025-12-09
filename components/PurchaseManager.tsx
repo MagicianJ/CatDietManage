@@ -210,11 +210,11 @@ const PurchaseManager: React.FC<PurchaseManagerProps> = ({ purchases, setPurchas
                    </div>
                  ) : detailModule === InventoryModule.Organ ? (
                     <>
-                      <select className="w-full p-2 border rounded text-sm" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value as MeatCategory})}>
-                         <option value={MeatCategory.Heart}>心脏</option>
+                      <select className="w-full p-2 border rounded text-sm" value={newItem.category || ''} onChange={e => setNewItem({...newItem, category: (e.target.value == MeatCategory.Organ? MeatCategory.Organ : MeatCategory.Heart)})}>
+                          <option value={MeatCategory.Heart}>心脏</option>
                          <option value={MeatCategory.Organ}>非心脏内脏</option>
                       </select>
-                      <input type="text" placeholder="名称" className="w-full p-2 border rounded text-sm" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} />
+                      <input type="text" placeholder="名称" className="w-full p-2 border rounded text-sm" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value, category: newItem.category?newItem.category :MeatCategory.Heart})} />
                     </>
                  ) : (
                     <div className="col-span-2">
